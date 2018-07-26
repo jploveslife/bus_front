@@ -1,0 +1,161 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- <meta name="Keywords" content="聚宝网络 聚宝信息 聚宝人" />
+    <meta name="Description" content="简易公交查询系统" /> -->
+    <!-- Mobile Devices Support -->
+    <meta content="application/xhtml+xml;charset=UTF-8" http-equiv="Content-Type">
+    <meta content="telephone=no, address=no" name="format-detection">
+    <meta name="apple-mobile-web-app-capable" content="yes" /> <!-- apple devices fullscreen -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+
+    <title>首页</title>
+    <!-- 引入样式 -->
+	<link rel="stylesheet" href="../css/style.css">
+     <!-- 引入vuejs -->
+    <script src="../js/vue.js"></script>
+	<!-- 引入组件库 -->
+	<script src="../js/mint-ui.js"></script>
+
+ 	<!-- 引入业务库 -->
+    <script src="../js/common.js"></script>
+    <script src="../js/index.js"></script>
+    <style type="text/css">
+        .my-cell{
+            border-bottom: 1px solid; border-top: 1px solid; color: #d9d9d9;position: relative;
+        }
+        .my-cell-title{
+            font-size: 16px;line-height: 1; color: #000;margin: 20px 10px 10px 10px;
+        }
+        .my-cell-desc {
+            font-size: 12px; color: #888;margin: 0px 10px;
+        }
+        .my-cell-content{
+            font-size: 14px; color: #888;margin: 0px 10px 5px;
+        }
+
+        .my-cell-allow-right::after {
+            border: solid 2px #c8c8cd;
+            border-bottom-width: 0;
+            border-left-width: 0;
+            content: " ";
+            top: 50%;
+            right: 20px;
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            -webkit-transform: translateY(-50%) rotate(45deg);
+            transform: translateY(-50%) rotate(45deg);
+        }
+
+        .mint-navbar .mint-tab-item.is-selected { 
+            border-bottom: 0px solid #26a2ff !important;
+        }
+
+        .mint-navbar{
+            border-bottom: 1px solid #26a2ff !important;
+        }
+
+        .divSearch{
+            margin: 5px 0px;
+        }
+        .divSearch .input{
+            margin: 0px 50px;
+        }
+
+    </style>
+</head>
+
+<body style="margin: 0px;">
+    <div id="app"  style="">
+        <mt-header title="公交查询系统">
+          <mt-button  @click.native="onBackClick" icon="back" slot="left">返回</mt-button>
+        </mt-header>
+
+         <mt-navbar v-model="selected">
+          <mt-tab-item id="1" @click.native="onClickTab()">线路</mt-tab-item>
+          <mt-tab-item id="2" @click.native="onClickTab()">站点</mt-tab-item>
+        </mt-navbar>
+
+        <!-- tab-container -->
+        <mt-tab-container v-model="selected">
+          <mt-tab-container-item id="1">
+            <div class="divSearch">
+                <input class="input" v-model="searchLine" placeholder="线路名称，例：快1，66" /> 
+                <mt-button type="primary" size="small"  @click.native="onSearchClick">查询</mt-button>
+            </div>
+
+            <mt-cell  @click.native="onLineInfo($event,l)" v-for="l in searchList" :key="l.lineId" :id="l.lineId"  :title="l.lineName" :label="l.content" is-link></mt-cell>
+          </mt-tab-container-item>
+          <mt-tab-container-item id="2">
+            <div class="divSearch">
+                <input class="input" v-model="searchLine" placeholder="线路名称，例：石湖东路" />
+                <mt-button type="primary" size="small"  @click.native="onSearchClick">查询</mt-button>
+            </div>
+
+            <my-cell @click.native="onStationInfo($event,s)" v-for="s in searchStationList" :key="s.stationID"  :id="s.stationID" :obj="s" ></my-cell>
+          </mt-tab-container-item>          
+        </mt-tab-container>
+
+       
+    </div>
+</body>
+<script type="text/javascript">
+    Vue.component("my-cell",{
+        props : ['obj'],
+        template : '<div class="my-cell"   v-on:click="$emit(\'toStationInfo\',$event)"><div class="my-cell-title" >{{obj.siteName}}</div><div class="my-cell-desc" >{{obj.position}}</div><div class="my-cell-content" >{{obj.joinBus}}</div><div class="my-cell-allow-right"></div></div>'
+    })
+
+
+    new Vue({
+        el:"#app",
+        data:{
+            searchLine : '',
+            selected : '1',
+            searchList :[],
+            searchStationList :[]
+        },
+        methods :{
+            onBackClick : function() {
+                console.log('111');
+                window.history.go(-1);
+            },
+            onClickTab : function(event){
+                this.searchLine = "";
+                this.searchList = [];
+                this.searchStationList= [];
+            },
+            onSearchClick : function(){
+                console.log('222------------------' + this.selected);
+                if(this.selected == 1){
+                    var _self = this;
+                    callAjax.request(CONSTANTS.SEARCH_LINE_URL + this.searchLine,function(resp){
+                       _self.searchList = resp;
+                    });
+                }else if(this.selected == 2){
+                    var _self = this;
+                    callAjax.request(CONSTANTS.SEARCH_STATION_URL + this.searchLine,function(resp){
+                       _self.searchStationList = resp;
+                    });
+                }                
+            },
+            onLineInfo : function(event,lineInfo){
+                console.log('3333-----------------------'+JSON.stringify(lineInfo));
+
+                window.location.href = "lineinfo.html?lineId=" + lineInfo.lineId + "&lineName=" + encodeURI(lineInfo.lineName);
+            },
+            onStationInfo : function(event,stationInfo){
+                console.log('4444-----------------------'+ JSON.stringify(stationInfo));
+
+                window.location.href = "siteList.html?stationID=" + stationInfo.stationID + "&siteName=" + encodeURI(stationInfo.siteName);
+               
+            }
+        }
+    });
+
+
+</script>
+</html>
